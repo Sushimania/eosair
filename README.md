@@ -27,7 +27,9 @@ EOS 계정 수집은 ./eosair 기본 명령어로 실행할 수 있습니다. �
 $ ./eosair -n 9800000
 ```
 ## EOS memo 광고 실행
-예시) accounts.csv 에 계정 정보가 수집된 상태이고 3번째 행의 계정부터 1만명의 계정한테 memo 광고를 전달하려고 한다.
+예시) accounts.csv 에 계정 정보가 수집된 상태이고 3번째 행의 계정부터 최신 계정까지 memo 광고를 전달하려고 한다.
+![eosair_csv](https://user-images.githubusercontent.com/15756632/45803057-82a92c80-bcf3-11e8-8529-a90db3a7d9b8.png)
+![eosair_ad](https://user-images.githubusercontent.com/15756632/45803064-876de080-bcf3-11e8-8188-e45bda3ec73a.png)
 ```{r, engine='bash'}
 $ ./eosair -memo "메모 내용" -sender [EOS 계정명] -n 3 -p [EOS default wallet unlock 패스워드]
 ```
