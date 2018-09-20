@@ -27,14 +27,14 @@ EOS 계정 수집은 ./eosair 기본 명령어로 실행할 수 있습니다. �
 $ ./eosair -n 9800000
 ```
 ## EOS memo 광고 실행
-예시) accounts.csv 에 계정 정보가 수집된 상태이고 3번째 행의 계정부터 최신 계정까지 memo 광고를 전달하려고 한다.
+예시) accounts.csv 에 계정 정보가 수집된 상태이고 3번째 행의 계정부터 최신 계정까지 memo 광고를 전달하려고 함.
 ![eosair_csv](https://user-images.githubusercontent.com/15756632/45803057-82a92c80-bcf3-11e8-8529-a90db3a7d9b8.png)
 ![eosair_ad](https://user-images.githubusercontent.com/15756632/45803064-876de080-bcf3-11e8-8188-e45bda3ec73a.png)
 ```{r, engine='bash'}
 $ ./eosair -memo "메모 내용" -sender [EOS 계정명] -n 3 -p [EOS default wallet unlock 패스워드]
 ```
 ## EOS 에어드랍 실행
-위의 memo 광고처럼 accounts.csv 에 계정 정보가 미리 저장되어 있어야 한다. 예를 들어, 3번째 행부터 실행하려면 -n 3 옵션을 입력한다. 에어드랍은 유저가 EOS를 보유한 비율대로 지급할 수도 있고 동일한 수량을 똑같이 지급할 수도 있다.
+위의 memo 광고처럼 accounts.csv 에 계정 정보가 미리 저장되어 있어야 합니다. 예를 들어, 3번째 행부터 실행하려면 -n 3 옵션을 입력한다. 에어드랍은 유저가 EOS를 보유한 비율대로 지급할 수도 있고 동일한 수량을 똑같이 지급할 수도 있습니다.
 ```{r, engine='bash'}
 $ ./eosair -airdrop [토큰 심볼 이름] -contract [컨트랙트 계정이름] -sender [EOS 계정이름] -amount "1.0000/EOS" -memo "메모 내용" -n 3 -p [default wallet unlock 패스워드]
 ```
