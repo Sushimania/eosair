@@ -52,7 +52,7 @@ func main() {
 	arg5 := flag.String("airdrop", "", "에어드랍하려는 토큰 심볼 이름을 입력하세요.\n")
 	arg6 := flag.String("contract", "", "에어드랍하려는 토큰의 스마트컨트랙트 계정을 입력하세요.\n")
 	arg7 := flag.String("amount", "1.0000/EOS", "에어드랍하려는 토큰 수량을 입력하세요. -amount \"2.0000/EOS\" 를 입력하면 20.0000 EOS 를 가진 계정에는 40.0000 토큰이 지급됩니다. -amount \"1.0000\"과 -amount \"1.0000/EOS\"가 서로 다른 의미라는걸 기억하세요. -amount \"1.0000\"는 각 계정에 1.0000 토큰을 지급한다는 의미이고 -amount \"1.0000/EOS\"는 각 계정의 EOS 잔액을 확인하고 EOS 수량만큼 1:1 비율로 토큰을 지급한다는 의미입니다.\n")
-	flag.String("v", "", "v1.0.10\nCopyright (c) 2018, Booyoun Kim\nEOS 계정 수집, memo 광고, 에어드랍이 가능한 프로그램입니다.(docker 가 설치되어 있어야함)\n\n1. docker 에서 eosio 이미지 가져오는 방법\n$ docker pull eosio/eos\n\n2. 컨테이너 생성\n$ sudo docker run -it --name eosio -p 8888:8888 -p 9876:9876 eosio/eos /bin/bash\n\n3. 컨테이너 시작\n$ docker start eosio\n\n4. EOS 계정 수집(980만 번째 블록부터 최신블록까지 계정을 찾는 경우 - 전체 계정을 수집하는 경우 수십일이 걸릴 수도 있습니다.)\n$ ./eosair -n 9800000\n\n5. memo 대량 전송(accounts.csv 에 계정 정보가 저장되어 있어야한다. 3번째 행부터 실행하려면 -n 3 옵션을 입력한다.)\n$ ./eosair -memo \"메모내용\" -sender [EOS 계정이름] -n 3 -p [default wallet unlock 패스워드]\n\n6. 에어드랍(accounts.csv 에 계정 정보가 저장되어 있어야 한다. 예를 들어, 3번째 행부터 실행하려면 -n 3 옵션을 입력한다.\n$ ./eosair -airdrop [심볼 이름] -contract [컨트랙트 계정이름] -sender [EOS 계정이름] -amount \"1.0000/EOS\" -memo \"메모 내용\" -n 3 -p [default wallet unlock 패스워드]\n")
+	flag.String("v", "", "v1.0.11\nCopyright (c) 2018, Booyoun Kim\nEOS 계정 수집, memo 광고, 에어드랍이 가능한 프로그램입니다.(docker 가 설치되어 있어야함)\n\n1. docker 에서 eosio 이미지 가져오는 방법\n$ docker pull eosio/eos\n\n2. 컨테이너 생성\n$ sudo docker run -it --name eosio -p 8888:8888 -p 9876:9876 eosio/eos /bin/bash\n\n3. 컨테이너 시작\n$ docker start eosio\n\n4. EOS 계정 수집(980만 번째 블록부터 최신블록까지 계정을 찾는 경우 - 전체 계정을 수집하는 경우 수십일이 걸릴 수도 있습니다.)\n$ ./eosair -n 9800000\n\n5. memo 대량 전송(accounts.csv 에 계정 정보가 저장되어 있어야한다. 3번째 행부터 실행하려면 -n 3 옵션을 입력한다.)\n$ ./eosair -memo \"메모내용\" -sender [EOS 계정이름] -n 3 -p [default wallet unlock 패스워드]\n\n6. 에어드랍(accounts.csv 에 계정 정보가 저장되어 있어야 한다. 예를 들어, 3번째 행부터 실행하려면 -n 3 옵션을 입력한다.\n$ ./eosair -airdrop [심볼 이름] -contract [컨트랙트 계정이름] -sender [EOS 계정이름] -amount \"1.0000/EOS\" -memo \"메모 내용\" -n 3 -p [default wallet unlock 패스워드]\n")
 	flag.Parse()
 
 	startBlockNum = *arg1
@@ -166,6 +166,8 @@ func airdrop() {
 		amount = strings.Replace(amount, "/EOS", "", -1)
 	}
 
+	var countErrorNum int
+
 	for i := startNum; i < lengthAccounts; i++ {
 		// 각 계정으로 토큰 전송
 		// BP url 블록 순서대로 선택
@@ -217,13 +219,19 @@ func airdrop() {
 			continue
 		}
 
-	tokenTransfer:
+		tokenTransfer:
 
 		// cleos --url https://api.main.alohaeos.com:443 push action ethsidechain transfer '[ "g44tsojxguge", "moneymakings", "50.0000 EETH", "EETH send"]' -p g44tsojxguge
 		command := `docker exec eosio cleos --url ` + bpUrl + ` push action ` + contract + ` transfer '[ "` + sender + `", "` + savedAccount[i] + `", "` + amount + ` ` + tokenSymbol + `", "` + memo + `"]' -p ` + sender
 		cmd1 := exec.Command("sh", "-c", command)
 		_, err := cmd1.CombinedOutput()
 		if err != nil {
+			countErrorNum++
+			// transfer 오류가 2번인 경우 다음 csv list 로 넘어가야함
+			if countErrorNum > 1 {
+				continue
+			}
+
 			fmt.Printf("transfer 명령을 실행할 수 없는 상태입니다. (error: %v)\n", err)
 
 			// 15분마다 wallet unlock 해줘야함
@@ -260,7 +268,11 @@ func sendMemo() {
 	fmt.Printf("타겟 계정 수 : %v\n", lengthAccounts - startNum)
 	fmt.Printf("memo 메시지 전송을 시작합니다.\n")
 
+	var countErrorNum int
+
 	for i := startNum; i < lengthAccounts; i++ {
+		countErrorNum = 0
+
 		// 각 계정으로 0.0001 EOS 전송 + memo
 		// BP url 블록 순서대로 선택
 		bpUrl := util.SelectBPUrl(i)
@@ -269,13 +281,20 @@ func sendMemo() {
 			continue
 		}
 
-	eosTransfer:
+		eosTransfer:
 
-		// cleos --url https://api.main.alohaeos.com:443 transfer g44tsojxguge yellowhammer "0.0001 EOS" "Send memo text https://www.wannabit.io"
+		// cleos --url https://api.main.alohaeos.com:443 transfer g44tsojxguge yellowhammer "0.0001 EOS" "Create an EOS account on eostart.com"
 		command := `docker exec eosio cleos --url ` + bpUrl + ` transfer ` + sender + ` ` + savedAccount[i] + ` "0.0001 EOS" "` + memo + `"`
+
 		cmd1 := exec.Command("sh", "-c", command)
 		_, err := cmd1.CombinedOutput()
 		if err != nil {
+			countErrorNum++
+			// transfer 오류가 2번인 경우 다음 csv list 로 넘어가야함
+			if countErrorNum > 1 {
+				continue
+			}
+
 			fmt.Printf("transfer 명령을 실행할 수 없는 상태입니다. (error: %v)\n", err)
 
 			// 15분마다 wallet unlock 해줘야함
@@ -367,9 +386,9 @@ func unlockWallet(bpUrl string, unlockPassword string) {
 	cmd1 := exec.Command("sh", "-c", command)
 	_, err := cmd1.CombinedOutput()
 	if err != nil {
-		fmt.Printf("wallet unlock 실패\n")
+		fmt.Printf("Wallet error: wallet이 unlock 상태이거나 송금받을 계정이 수신거절 상태입니다.\n")
 	} else {
-		fmt.Printf("wallet unlock 성공\n")
+		fmt.Printf("Wallet unlock 성공\n")
 	}
 }
 
